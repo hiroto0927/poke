@@ -1,7 +1,7 @@
 export type PokeApiInitResponse = {
   count: number;
-  next: string;
-  previous: any;
+  next?: string;
+  previous?: string;
   results: { name: string; url: string }[];
 };
 
