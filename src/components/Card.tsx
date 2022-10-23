@@ -1,6 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 import styles from "../styles/Home.module.css";
+import { PokeApiResponse } from "../types/apiResponse";
 
-export default function Card({ pokemon }: any) {
+type Props = {
+  pokemon: PokeApiResponse;
+};
+
+export default function Card({ pokemon }: Props) {
   return (
     <div className=" text-center m-auto">
       <div className={styles.shadow}>

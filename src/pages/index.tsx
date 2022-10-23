@@ -1,35 +1,32 @@
 import type { NextPage } from "next";
-import Head from "next/head";
-import Image from "next/image";
-import { useEffect, useState, createContext } from "react";
+import { useEffect, useState } from "react";
 import Card from "../components/Card";
+import MoveButton from "../components/MoveButton";
 import Navbar from "../components/Navbar";
-import { getAllPokemon, getPokemon, pokeData } from "../lib/pokemon";
-import styles from "../styles/Home.module.css";
+import { getAllPokemon, getPokemon } from "../lib/pokemon";
+import { PokeApiResponse } from "../types/apiResponse";
+
+const INITIAL_URL = "https://pokeapi.co/api/v2/pokemon";
 
 const Home: NextPage = () => {
-  const initialURL = "https://pokeapi.co/api/v2/pokemon";
   const [loading, setLoading] = useState(true);
-  const [pokemonData, setPokemonData] = useState<never[]>();
-  const [nextUrl, setNextUrl] = useState<RequestInfo | URL>("");
-  const [prevUrl, setPrevUrl] = useState<RequestInfo | URL>("");
+  const [pokemonData, setPokemonData] = useState<PokeApiResponse[]>();
+  const [nextUrl, setNextUrl] = useState("");
+  const [prevUrl, setPrevUrl] = useState("");
 
-  const loadPokemon = async (data: { url: any }[]) => {
-    let _pokemonData = await Promise.all(
-      data.map((pokemon: { url: any }) => {
-        let pokemonRecord = getPokemon(pokemon.url);
-        return pokemonRecord as never;
-      })
+  const loadPokemon = async (data: { name: string; url: string }[]) => {
+    const _pokemonData = await Promise.all(
+      data.map((pokemon) => getPokemon(pokemon.url))
     );
     setPokemonData(_pokemonData);
   };
 
-  console.log(pokemonData);
+  console.log({ pokemonData });
 
   useEffect(() => {
     const fetchPokemonData = async () => {
       // 全てのポケモンデータを取得
-      let res = await getAllPokemon(initialURL);
+      let res = await getAllPokemon(INITIAL_URL);
       // 各ポケモンの詳細なデータを取得
       loadPokemon(res.results);
       // console.log(res);
@@ -40,6 +37,25 @@ const Home: NextPage = () => {
 
     fetchPokemonData();
   }, []);
+
+  const onClickMoveButton = (url?: string) => {
+    return async () => {
+      // URLの存在チェック
+      if (!url) return;
+
+      // ローディング表示
+      setLoading(true);
+
+      // データの取得 & セット
+      let data = await getAllPokemon(url);
+      await loadPokemon(data.results);
+      setNextUrl(data.next);
+      setPrevUrl(data.previous);
+
+      // ページ表示
+      setLoading(false);
+    };
+  };
 
   return (
     <div>
@@ -55,35 +71,8 @@ const Home: NextPage = () => {
               })}
             </div>
             <div className=" p-[30px] flex justify-center justify-items-center gap-5 ">
-              <button
-                className="p-[13px] pr-8 pl-8 bg-cyan-300 border-none"
-                onClick={async () => {
-                  if (!prevUrl) return;
-                  setLoading(true);
-                  let data = await getAllPokemon(prevUrl);
-                  await loadPokemon(data.results);
-                  setNextUrl(data.next);
-                  setPrevUrl(data.previous);
-                  console.log(prevUrl);
-                  setLoading(false);
-                }}
-              >
-                前へ
-              </button>
-              <button
-                className="p-[13px] pr-8 pl-8 bg-cyan-300 border-none"
-                onClick={async () => {
-                  setLoading(true);
-                  let data = await getAllPokemon(nextUrl);
-                  console.log(data);
-                  await loadPokemon(data.results);
-                  setNextUrl(data.next);
-                  setPrevUrl(data.previous);
-                  setLoading(false);
-                }}
-              >
-                次へ
-              </button>
+              <MoveButton onClick={onClickMoveButton(prevUrl)}>前へ</MoveButton>
+              <MoveButton onClick={onClickMoveButton(nextUrl)}>次へ</MoveButton>
             </div>
           </div>
         )}
